@@ -40,15 +40,17 @@ llm_templates() {
 
 chat() {
   local histfile="$HOME/.config/llm-chat/history"
+  local filter_path="$(dirname "$0")/add_multiline_markers.py"
   local pregiven=""
 
-  # If there is data, read it all and wrap it
+  # If there is data, read it all
   if read -t 0; then
     pregiven=$(cat -)
-    pregiven=$(echo -en "!multi\n$pregiven\n!end")
-    pregiven=$(echo -n "$pregiven" | sed -e '2,$ s/^/@@/' | tr -d '\n')
     exec < /dev/tty  # Reset stdin to terminal
   fi
+
+  # Make the filter executable
+  chmod +x "$filter_path"
 
   # rlwrap: warning: rlwrap appears to do nothing for llm, which asks for
   # single keypresses all the time. Don't you need --always-readline
@@ -56,6 +58,7 @@ chat() {
   rlwrap \
     --multi-line=@@ \
     --multi-line-ext .txt \
+    --filter "$filter_path" \
     --always-readline \
     --pre-given "$pregiven" \
     --prompt-colour=Cyan \
