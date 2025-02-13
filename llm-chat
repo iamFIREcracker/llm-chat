@@ -3,69 +3,69 @@
 main() {
     local selection
 
-    selection=$(all_options | fzf --select-1 --delimiter % --with-nth 2 --query "${*}" )
+    selection=$(all_options | fzf --select-1 --delimiter % --with-nth 2 --query "${*}")
     if [ -n "$selection" ]; then
         chat $(echo "$selection" | cut -d% -f 1)
     fi
 }
 
 all_options() {
-  llm_models
-  llm_templates
+    llm_models
+    llm_templates
 }
 
 llm_models() {
-  local line
-  local model
+    local line
+    local model
 
-  llm models |
-  while read line; do
-    model=$(echo $line | cut -d: -f2- | cut -d' ' -f2)
-    echo "-m $model%$line"
-  done
+    llm models |
+        while read line; do
+            model=$(echo $line | cut -d: -f2- | cut -d' ' -f2)
+            echo "-m $model%$line"
+        done
 }
 
 # https://llm.datasette.io/en/stable/templates.html
 llm_templates() {
-  local line
-  local template
+    local line
+    local template
 
-  llm templates |
-  while read line; do
-    template=$(echo $line | cut -d: -f1 | cut -d' ' -f1)
-    echo "-t $template%$line"
-  done
+    llm templates |
+        while read line; do
+            template=$(echo $line | cut -d: -f1 | cut -d' ' -f1)
+            echo "-t $template%$line"
+        done
 
 }
 
 chat() {
-  local histfile="$HOME/.config/llm-chat/history"
-  local filter_path="$(dirname "$0")/add_multiline_markers.py"
-  local pregiven=""
+    local histfile="$HOME/.config/llm-chat/history"
+    local filter_path="$(dirname "$0")/add_multiline_markers.py"
+    local pregiven=""
 
-  # If there is data, read it all
-  if read -t 0; then
-    pregiven=$(cat -)
-    exec < /dev/tty  # Reset stdin to terminal
-  fi
+    # If there is data, read it all
+    if read -t 0; then
+        pregiven=$(cat -)
+        exec </dev/tty # Reset stdin to terminal
+    fi
 
-  # Make the filter executable
-  chmod +x "$filter_path"
+    # Make the filter executable
+    chmod +x "$filter_path"
 
-  # rlwrap: warning: rlwrap appears to do nothing for llm, which asks for
-  # single keypresses all the time. Don't you need --always-readline
-  # and possibly --no-children? (cf. the rlwrap manpage)
-  rlwrap \
-    --multi-line=@@ \
-    --multi-line-ext .txt \
-    --filter "$filter_path" \
-    --always-readline \
-    --pre-given "$pregiven" \
-    --prompt-colour=Cyan \
-    --quote-characters='"' \
-    --histsize 10000 \
-    --history-filename "$histfile" \
-    -- llm chat "$@"
+    # rlwrap: warning: rlwrap appears to do nothing for llm, which asks for
+    # single keypresses all the time. Don't you need --always-readline
+    # and possibly --no-children? (cf. the rlwrap manpage)
+    rlwrap \
+        --multi-line=@@ \
+        --multi-line-ext .txt \
+        --filter "$filter_path" \
+        --always-readline \
+        --pre-given "$pregiven" \
+        --prompt-colour=Cyan \
+        --quote-characters='"' \
+        --histsize 10000 \
+        --history-filename "$histfile" \
+        -- llm chat "$@"
 }
 
 # all_options
