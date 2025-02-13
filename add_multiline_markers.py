@@ -35,4 +35,14 @@ filter.input_handler = handle_input
 # Pass through output unchanged but track it for prompt handling
 filter.output_handler = lambda output: output
 
+
+def handle_history(line):
+    """Strip trailing @@ markers from history lines"""
+    while line.rstrip().endswith('@@'):
+        line = line[:-2]
+    return line.rstrip()
+
+
+filter.history_handler = handle_history
+
 filter.run()
